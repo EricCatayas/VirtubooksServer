@@ -12,6 +12,25 @@ class PageController {
     }
   }
 
+  async updatePage(req, res, next) {
+    try {
+      const { pageId } = req.params;
+      const pageData = req.body;
+
+      const page = await Page.findByIdAndUpdate(
+        pageId,
+        { ...pageData, updatedAt: new Date().toISOString() },
+        { new: true }
+      );
+      if (!page) {
+        return res.status(404).json({ message: "Page not found" });
+      }
+      res.status(200).json(page);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async updatePages(req, res, next) {
     try {
       const { pages } = req.body;
