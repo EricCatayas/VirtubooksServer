@@ -1,5 +1,6 @@
 const Notebook = require("../models/notebook");
 const Page = require("../models/page");
+const { generateUID } = require("../utils/generators");
 
 class PageController {
   async getPages(req, res, next) {
@@ -48,7 +49,7 @@ class PageController {
             const page =
               oldPages.find((p) => p.id === pageData.id) ||
               new Page({
-                id: pageData.id,
+                id: pageData.id || generateUID(),
                 idx: pageData.idx || idx,
                 notebookId: notebookId,
                 ...pageData,
