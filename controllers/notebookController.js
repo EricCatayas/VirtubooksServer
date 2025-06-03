@@ -87,6 +87,8 @@ class NotebookController {
         if (coverImageURL) {
           firstPage.backgroundImageURL = coverImageURL;
         }
+
+        await firstPage.save();
       }
 
       await newNotebook.save();
