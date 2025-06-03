@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
-const notebookRouter = require("./routes/notebookRoute");
+const apiRoute = require("./routes/index");
 
 const DB_URL = process.env.DB_URL;
 
@@ -25,7 +25,7 @@ async function main() {
 }
 
 app.use(express.json());
-app.use("/notebooks", notebookRouter);
+app.use("/api", apiRoute);
 app.listen(process.env.PORT, () => {
   console.log(`I am listenin to port ${process.env.PORT}`);
 });

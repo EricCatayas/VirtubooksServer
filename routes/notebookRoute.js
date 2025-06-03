@@ -10,7 +10,11 @@ router.post("/", authMiddleware, NotebookController.createNotebook);
 router.get("/:id", authMiddleware, NotebookController.getNotebook);
 router.put("/:id", authMiddleware, NotebookController.updateNotebook);
 router.delete("/:id", authMiddleware, NotebookController.deleteNotebook);
-router.put("/:id/pages", authMiddleware, PageController.updatePages);
-router.put("/:id/pages/:pageId", authMiddleware, PageController.updatePages);
+router.put("/:notebookId/pages", authMiddleware, PageController.updatePages);
+router.put(
+  "/:notebookId/pages/:pageId",
+  authMiddleware,
+  PageController.updatePages
+);
 
 module.exports = router;
