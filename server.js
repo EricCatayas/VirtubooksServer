@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const mongoose = require("mongoose");
 const apiRoute = require("./routes/index");
@@ -25,6 +26,7 @@ async function main() {
 }
 
 app.use(express.json());
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use("/api", apiRoute);
 app.listen(process.env.PORT, () => {
   console.log(`I am listenin to port ${process.env.PORT}`);
