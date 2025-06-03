@@ -40,26 +40,30 @@ class PageController {
         return res.status(400).json({ message: "Invalid pages format" });
       }
 
+      const notebook = await Notebook.findOne({ id: notebookId });
+
+      if (!notebook) {
+        return res.status(404).json({ message: "Notebook not found" });
+      }
+
       const oldPages = await Page.find({ notebookId }).sort({ idx: 1 });
 
       const newPages = await Promise.all(
-        pages
-          .map(async (pageData, idx) => {
-            // if oldPages does not contain the page, create a new one,
-            const page =
-              oldPages.find((p) => p.id === pageData.id) ||
-              new Page({
-                id: pageData.id || generateUID(),
-                idx: pageData.idx || idx,
-                notebookId: notebookId,
-                ...pageData,
-              });
+        pages.map(async (pageData, idx) => {
+          // if oldPages does not contain the page, create a new one,
+          const page =
+            oldPages.find((p) => p.id === pageData.id) ||
+            new Page({
+              id: pageData.id || generateUID(),
+              idx: pageData.idx || idx,
+              notebookId: notebookId,
+              ...pageData,
+            });
 
-            await page.save();
+          await page.save();
 
-            return page;
-          })
-          .sort({ idx: 1 })
+          return page;
+        })
       );
 
       // delete old pages that are not in the new pages array
@@ -70,7 +74,15 @@ class PageController {
         await Page.deleteMany({ id: { $in: pagesToDelete } });
       }
 
-      res.status(200).json(newPages);
+      // update the notebook's pages array
+      notebook.pages = newPages.map((p) => p._id);
+      notebook.updatedAt = new Date().toISOString();
+      await notebook.save();
+
+      const updatedNotebook = await Notebook.findOne({
+        id: notebookId,
+      }).populate("pages");
+      res.status(200).json(updatedNotebook);
     } catch (error) {
       next(error);
     }
