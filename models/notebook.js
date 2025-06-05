@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const { generateUID } = require("../utils/generators");
 
 const notebookSchema = new Schema(
   {
@@ -45,7 +46,7 @@ notebookSchema.post("findOneAndDelete", async function (notebook) {
 
 notebookSchema.pre("save", function (next) {
   if (!this.id) {
-    this.id = new mongoose.Types.ObjectId().toString();
+    this.id = generateUID();
   }
   if (!this.createdAt) {
     this.createdAt = new Date().toISOString();

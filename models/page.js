@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const { generateUID } = require("../utils/generators");
 
 const pageSchema = new Schema({
   id: { type: String, required: true },
@@ -26,7 +27,7 @@ const pageSchema = new Schema({
 
 pageSchema.pre("save", function (next) {
   if (!this.id) {
-    this.id = new mongoose.Types.ObjectId().toString();
+    this.id = generateUID();
   }
   if (!this.createdAt) {
     this.createdAt = new Date().toISOString();
