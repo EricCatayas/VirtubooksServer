@@ -26,7 +26,7 @@ async function main() {
 }
 
 app.use(express.json());
-app.use(cors({ origin: process.env.FRONTEND_URL }));
+app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use("/api", apiRoute);
 app.listen(process.env.PORT, () => {
   console.log(`I am listenin to port ${process.env.PORT}`);
