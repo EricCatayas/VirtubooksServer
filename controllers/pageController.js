@@ -40,34 +40,40 @@ class PageController {
         return res.status(400).json({ message: "Invalid pages format" });
       }
 
-      const notebook = await Notebook.findOne({ id: notebookId });
+      const notebook = await Notebook.findOne({ id: notebookId }).populate(
+        "pages"
+      );
 
       if (!notebook) {
         return res.status(404).json({ message: "Notebook not found" });
       }
 
-      const oldPages = await Page.find({ notebookId }).sort({ idx: 1 });
+      const prevPages = notebook.pages || [];
 
       const newPages = await Promise.all(
         pages.map(async (pageData, idx) => {
-          // if oldPages does not contain the page, create a new one,
-          const page =
-            oldPages.find((p) => p.id === pageData.id) ||
-            new Page({
-              id: pageData.id || generateUID(),
-              idx: pageData.idx || idx,
-              notebookId: notebookId,
-              ...pageData,
+          let prevPage = prevPages.find((p) => p.id === pageData.id);
+          if (prevPage) {
+            Object.assign(prevPage, pageData, {
+              idx: idx,
+              updatedAt: new Date().toISOString(),
+              notebookId,
             });
-
-          await page.save();
-
-          return page;
+          } else {
+            prevPage = new Page({
+              id: pageData.id || generateUID(),
+              notebookId,
+              ...pageData,
+              idx: idx,
+            });
+          }
+          await prevPage.save();
+          return prevPage;
         })
       );
 
       // delete old pages that are not in the new pages array
-      const oldPageIds = oldPages.map((p) => p.id);
+      const oldPageIds = prevPages.map((p) => p.id);
       const newPageIds = newPages.map((p) => p.id);
       const pagesToDelete = oldPageIds.filter((id) => !newPageIds.includes(id));
       if (pagesToDelete.length > 0) {
