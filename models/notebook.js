@@ -7,7 +7,11 @@ const notebookSchema = new Schema(
     userId: { type: String, required: true },
     title: { type: String, required: true },
     description: { type: String },
-    visibilility: { type: String, enum: ["public", "private"] },
+    visibilility: {
+      type: String,
+      enum: ["public", "private"],
+      default: "private",
+    },
     author: { type: String },
     aspectRatio: {
       type: String,
