@@ -15,6 +15,21 @@ class NotebookController {
     }
   }
 
+  async getFilteredNotebooks(req, res, next) {
+    const { title, description, author } = req.query;
+    const filter = {
+      $or: [
+        { title: { $regex: title, $options: "i" } },
+        { description: { $regex: description, $options: "i" } },
+        { author: { $regex: author, $options: "i" } },
+      ],
+      visibility: "public",
+    };
+    const result = await Notebook.find(filter).populate("pages");
+
+    res.status(200).json(result);
+  }
+
   // Get all public notebooks
   async getPublicNotebooks(req, res, next) {
     try {

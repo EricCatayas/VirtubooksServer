@@ -6,6 +6,7 @@ const PageController = require("../controllers/pageController.js");
 
 router.get("/", NotebookController.getPublicNotebooks);
 router.get("/user", authMiddleware, NotebookController.getUserNotebooks);
+router.get("/filter", NotebookController.getFilteredNotebooks);
 router.post("/", authMiddleware, NotebookController.createNotebook);
 router.get("/:id", authMiddleware, NotebookController.getNotebook);
 router.put("/:id", authMiddleware, NotebookController.updateNotebook);
