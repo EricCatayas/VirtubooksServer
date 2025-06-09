@@ -3,6 +3,30 @@ const Page = require("../models/page");
 const { generateUID } = require("../utils/generators");
 
 class NotebookController {
+  // Get a specific notebook by ID and user ID
+  async getNotebook(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const notebook = await Notebook.findOne({
+        id: req.params.id,
+      }).populate("pages");
+
+      if (!notebook) {
+        return res.status(404).json({ message: "Notebook not found" });
+      }
+
+      if (
+        notebook.visibilility === "private" &&
+        notebook.userId !== String(userId)
+      ) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.status(200).json(notebook);
+    } catch (error) {
+      next(error);
+    }
+  }
   // Get all notebooks for a user
   async getUserNotebooks(req, res, next) {
     try {
@@ -16,18 +40,22 @@ class NotebookController {
   }
 
   async getFilteredNotebooks(req, res, next) {
-    const { title, description, author } = req.query;
-    const filter = {
-      $or: [
-        { title: { $regex: title, $options: "i" } },
-        { description: { $regex: description, $options: "i" } },
-        { author: { $regex: author, $options: "i" } },
-      ],
-      visibility: "public",
-    };
-    const result = await Notebook.find(filter).populate("pages");
+    try {
+      const { title, description, author } = req.query;
+      const filter = {
+        $or: [
+          { title: { $regex: title, $options: "i" } },
+          { description: { $regex: description, $options: "i" } },
+          { author: { $regex: author, $options: "i" } },
+        ],
+        visibility: "public",
+      };
+      const result = await Notebook.find(filter).populate("pages");
 
-    res.status(200).json(result);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   // Get all public notebooks
@@ -108,21 +136,6 @@ class NotebookController {
 
       await newNotebook.save();
       res.status(201).json(newNotebook);
-    } catch (error) {
-      next(error);
-    }
-  }
-  // Get a specific notebook by ID
-  async getNotebook(req, res, next) {
-    try {
-      const notebook = await Notebook.findOne({
-        id: req.params.id,
-        userId: req.user.id,
-      }).populate("pages");
-      if (!notebook) {
-        return res.status(404).json({ message: "Notebook not found" });
-      }
-      res.status(200).json(notebook);
     } catch (error) {
       next(error);
     }
