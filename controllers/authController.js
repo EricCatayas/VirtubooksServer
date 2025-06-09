@@ -15,7 +15,6 @@ class AuthController {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      console.log("authController: User authenticated:", user);
       // Generate a JWT token
       const token = jwt.sign(
         { id: user.id, email: user.email, username: user.username },
