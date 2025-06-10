@@ -15,10 +15,7 @@ class NotebookController {
         return res.status(404).json({ message: "Notebook not found" });
       }
 
-      if (
-        notebook.visibilility === "private" &&
-        notebook.userId !== String(userId)
-      ) {
+      if (notebook.visibility === "private" && notebook.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -28,11 +25,22 @@ class NotebookController {
     }
   }
   // Get all notebooks for a user
-  async getUserNotebooks(req, res, next) {
+  async getNotebooksFromUser(req, res, next) {
     try {
-      const notebooks = await Notebook.find({ userId: req.user.id }).populate(
-        "pages"
-      );
+      const userId = req.params.userId;
+      const currentUserId = req.user ? req.user.id : null;
+
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      const notebooks =
+        userId === currentUserId
+          ? await Notebook.find({ userId }).populate("pages")
+          : await Notebook.find({ userId, visibility: "public" }).populate(
+              "pages"
+            );
+
       res.status(200).json(notebooks);
     } catch (error) {
       next(error);
@@ -41,16 +49,43 @@ class NotebookController {
 
   async getFilteredNotebooks(req, res, next) {
     try {
-      const { title, description, author } = req.query;
+      const {
+        userId,
+        title = "",
+        description = "",
+        author = "",
+        s_updatedAt,
+        s_createdAt,
+        limit,
+      } = req.query;
+
       const filter = {
         $or: [
           { title: { $regex: title, $options: "i" } },
           { description: { $regex: description, $options: "i" } },
           { author: { $regex: author, $options: "i" } },
         ],
-        visibility: "public",
       };
-      const result = await Notebook.find(filter).populate("pages");
+
+      if (userId) {
+        filter.userId = userId;
+      }
+      if (!req.user || req.user.id !== userId) {
+        filter.visibility = "public";
+      }
+
+      const sort = {
+        ...(s_updatedAt
+          ? { updatedAt: s_updatedAt === "asc" ? 1 : undefined }
+          : {}),
+        ...(s_createdAt
+          ? { createdAt: s_createdAt === "asc" ? 1 : undefined }
+          : {}),
+      };
+      const result = await Notebook.find(filter)
+        .sort(sort)
+        .limit(Number(limit))
+        .populate("pages");
 
       res.status(200).json(result);
     } catch (error) {
