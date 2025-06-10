@@ -19,7 +19,7 @@ router.get(
   NotebookController.getFilteredNotebooks
 );
 router.post("/", authMiddleware, NotebookController.createNotebook);
-router.get("/:id", authMiddleware, NotebookController.getNotebook);
+router.get("/:id", parseUserFromToken, NotebookController.getNotebook);
 router.put("/:id", authMiddleware, NotebookController.updateNotebook);
 router.delete("/:id", authMiddleware, NotebookController.deleteNotebook);
 router.put("/:notebookId/pages", authMiddleware, PageController.updatePages);

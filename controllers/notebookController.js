@@ -6,7 +6,7 @@ class NotebookController {
   // Get a specific notebook by ID and user ID
   async getNotebook(req, res, next) {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
       const notebook = await Notebook.findOne({
         id: req.params.id,
       }).populate("pages");
