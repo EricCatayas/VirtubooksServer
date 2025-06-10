@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const Page = require("./page");
 const { generateUID } = require("../utils/generators");
 
 const notebookSchema = new Schema(
@@ -8,7 +9,7 @@ const notebookSchema = new Schema(
     userId: { type: String, required: true },
     title: { type: String, required: true },
     description: { type: String },
-    visibilility: {
+    visibility: {
       type: String,
       enum: ["public", "private"],
       default: "private",
@@ -39,7 +40,6 @@ notebookSchema.virtual("pageCount").get(function () {
 
 notebookSchema.post("findOneAndDelete", async function (notebook) {
   if (notebook) {
-    const Page = require("./page");
     await Page.deleteMany({ notebookId: notebook.id });
   }
 });
