@@ -15,7 +15,10 @@ class NotebookController {
         return res.status(404).json({ message: "Notebook not found" });
       }
 
-      if (notebook.visibility === "private" && notebook.userId !== userId) {
+      if (
+        notebook.visibility === "private" &&
+        String(notebook.userId) !== String(userId)
+      ) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -35,7 +38,7 @@ class NotebookController {
       }
 
       const notebooks =
-        userId === currentUserId
+        String(userId) === String(currentUserId)
           ? await Notebook.find({ userId }).populate("pages")
           : await Notebook.find({ userId, visibility: "public" }).populate(
               "pages"
@@ -70,17 +73,14 @@ class NotebookController {
       if (userId) {
         filter.userId = userId;
       }
-      if (!req.user || req.user.id !== userId) {
+
+      if (!req.user || String(req.user.id) !== String(userId)) {
         filter.visibility = "public";
       }
 
       const sort = {
-        ...(s_updatedAt
-          ? { updatedAt: s_updatedAt === "asc" ? 1 : undefined }
-          : {}),
-        ...(s_createdAt
-          ? { createdAt: s_createdAt === "asc" ? 1 : undefined }
-          : {}),
+        ...(s_updatedAt ? { updatedAt: s_updatedAt === "asc" ? 1 : -1 } : {}),
+        ...(s_createdAt ? { createdAt: s_createdAt === "asc" ? 1 : -1 } : {}),
       };
       const result = await Notebook.find(filter)
         .sort(sort)
