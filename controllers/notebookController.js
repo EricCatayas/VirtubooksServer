@@ -57,6 +57,7 @@ class NotebookController {
         title = "",
         description = "",
         author = "",
+        tag = "",
         s_updatedAt,
         s_createdAt,
         limit,
@@ -67,6 +68,7 @@ class NotebookController {
           { title: { $regex: title, $options: "i" } },
           { description: { $regex: description, $options: "i" } },
           { author: { $regex: author, $options: "i" } },
+          { tag: { $regex: tag, $options: "i" } },
         ],
       };
 
