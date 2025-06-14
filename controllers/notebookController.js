@@ -1,5 +1,7 @@
 const Notebook = require("../models/notebook");
 const Page = require("../models/page");
+const authService = require("../services/authService.js");
+const { arrayToIdMap } = require("../utils/converters");
 const { generateUID } = require("../utils/generators");
 
 class NotebookController {
@@ -22,6 +24,13 @@ class NotebookController {
         return res.status(403).json({ message: "Access denied" });
       }
 
+      if (req.user && String(notebook.userId) === String(req.user.id)) {
+        notebook.author = req.user.username;
+      } else {
+        const author = await authService.getUserById(notebook.userId);
+        notebook.author = author.username;
+      }
+
       res.status(200).json(notebook);
     } catch (error) {
       next(error);
@@ -30,19 +39,25 @@ class NotebookController {
   // Get all notebooks for a user
   async getNotebooksFromUser(req, res, next) {
     try {
-      const userId = req.params.userId;
       const currentUserId = req.user ? req.user.id : null;
+      const authorId = req.params.userId;
+      const author = await authService.getUserById(authorId);
 
-      if (!userId) {
+      if (!authorId) {
         return res.status(400).json({ message: "User ID is required" });
       }
 
       const notebooks =
-        String(userId) === String(currentUserId)
-          ? await Notebook.find({ userId }).populate("pages")
-          : await Notebook.find({ userId, visibility: "public" }).populate(
-              "pages"
-            );
+        String(authorId) === String(currentUserId)
+          ? await Notebook.find({ userId: authorId }).populate("pages")
+          : await Notebook.find({
+              userId: authorId,
+              visibility: "public",
+            }).populate("pages");
+
+      notebooks.forEach((notebook) => {
+        notebook.author = author.username || "Unknown Author";
+      });
 
       res.status(200).json(notebooks);
     } catch (error) {
@@ -54,23 +69,43 @@ class NotebookController {
     try {
       const {
         userId,
-        title = "",
-        description = "",
-        author = "",
-        tag = "",
+        search,
+        title,
+        description,
+        author,
+        tags,
         s_updatedAt,
         s_createdAt,
         limit,
       } = req.query;
 
-      const filter = {
-        $or: [
-          { title: { $regex: title, $options: "i" } },
-          { description: { $regex: description, $options: "i" } },
-          { author: { $regex: author, $options: "i" } },
-          { tag: { $regex: tag, $options: "i" } },
-        ],
-      };
+      console.log("Query Parameters:", req.query);
+
+      let filter = {};
+
+      if (search) {
+        const searchRegex = new RegExp(search, "i");
+        filter = {
+          $or: [
+            { title: searchRegex },
+            { description: searchRegex },
+            { tags: searchRegex },
+          ],
+        };
+
+      if (title) {
+        filter.title = { $regex: title, $options: "i" };
+      }
+
+      if (description) {
+        filter.description = { $regex: description, $options: "i" };
+      }
+
+      if (author) {}
+
+      if (tags) {
+        filter.tags = { $regex: tags, $options: "i" };
+      }
 
       if (userId) {
         filter.userId = userId;
@@ -84,10 +119,19 @@ class NotebookController {
         ...(s_updatedAt ? { updatedAt: s_updatedAt === "asc" ? 1 : -1 } : {}),
         ...(s_createdAt ? { createdAt: s_createdAt === "asc" ? 1 : -1 } : {}),
       };
+
+      console.log("Filter:", filter);
       const result = await Notebook.find(filter)
         .sort(sort)
         .limit(Number(limit))
         .populate("pages");
+
+      const users = await authService.getUsers();
+      const mappedUsers = arrayToIdMap(users);
+      result.forEach((notebook) => {
+        notebook.author =
+          mappedUsers[notebook.userId]?.username || "Unknown Author";
+      });
 
       res.status(200).json(result);
     } catch (error) {
@@ -101,6 +145,12 @@ class NotebookController {
       const notebooks = await Notebook.find({ visibility: "public" }).populate(
         "pages"
       );
+      const users = await authService.getUsers();
+      const mappedUsers = arrayToIdMap(users);
+      notebooks.forEach((notebook) => {
+        notebook.author =
+          mappedUsers[notebook.userId]?.username || "Unknown Author";
+      });
       res.status(200).json(notebooks);
     } catch (error) {
       next(error);
@@ -115,6 +165,7 @@ class NotebookController {
         description,
         visibility,
         aspectRatio,
+        tags,
         numberOfPages,
         coverImageURL,
       } = req.body;
@@ -126,6 +177,7 @@ class NotebookController {
         description,
         visibility,
         aspectRatio,
+        tags,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         styles: {},
@@ -172,6 +224,7 @@ class NotebookController {
       }
 
       await newNotebook.save();
+      newNotebook.author = req.user.username;
       res.status(201).json(newNotebook);
     } catch (error) {
       next(error);
@@ -180,7 +233,8 @@ class NotebookController {
   // Update a notebook
   async updateNotebook(req, res, next) {
     try {
-      const { title, description, visibility, aspectRatio, styles } = req.body;
+      const { title, description, visibility, aspectRatio, tags, styles } =
+        req.body;
       const updatedNotebook = await Notebook.findOneAndUpdate(
         { id: req.params.id, userId: req.user.id },
         {
@@ -188,6 +242,7 @@ class NotebookController {
           description,
           visibility,
           aspectRatio,
+          tags,
           styles,
           updatedAt: new Date().toISOString(),
         },
