@@ -79,8 +79,6 @@ class NotebookController {
         limit,
       } = req.query;
 
-      console.log("Query Parameters:", req.query);
-
       let filter = {};
 
       if (search) {
@@ -92,6 +90,7 @@ class NotebookController {
             { tags: searchRegex },
           ],
         };
+      }
 
       if (title) {
         filter.title = { $regex: title, $options: "i" };
@@ -101,7 +100,8 @@ class NotebookController {
         filter.description = { $regex: description, $options: "i" };
       }
 
-      if (author) {}
+      if (author) {
+      }
 
       if (tags) {
         filter.tags = { $regex: tags, $options: "i" };
