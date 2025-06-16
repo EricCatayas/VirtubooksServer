@@ -1,9 +1,7 @@
 class AuthService {
   WP_API_BASE_URL = "";
-  API_BASE_URL = "";
   constructor() {
     this.WP_API_BASE_URL = `${process.env.WP_API_BASE_URL}/wp-json/virtubooks/v1`;
-    this.API_BASE_URL = process.env.API_BASE_URL;
   }
 
   async getUser(user) {
@@ -30,7 +28,6 @@ class AuthService {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Origin: this.API_BASE_URL,
       },
     });
 
@@ -47,7 +44,6 @@ class AuthService {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Origin: this.API_BASE_URL,
       },
     });
 
