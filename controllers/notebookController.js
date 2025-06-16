@@ -47,6 +47,10 @@ class NotebookController {
         return res.status(400).json({ message: "User ID is required" });
       }
 
+      if (!author) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
       const notebooks =
         String(authorId) === String(currentUserId)
           ? await Notebook.find({ userId: authorId }).populate("pages")
