@@ -27,6 +27,10 @@ async function main() {
 
 app.use(express.json());
 app.use(cors({ origin: process.env.CLIENT_URL }));
+app.use((err, req, res, next) => {
+  // Error handling middleware
+  res.status(500).json({ message: err.message || "Internal Server Error" });
+});
 app.use("/api", apiRoute);
 app.listen(process.env.PORT, () => {
   console.log(`I am listenin to port ${process.env.PORT}`);
