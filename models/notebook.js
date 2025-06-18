@@ -20,6 +20,7 @@ const notebookSchema = new Schema(
       enum: ["6:9", "13:20", "3:5", "7:9", "1:1"],
       required: true,
     },
+    slug: { type: String, unique: true },
     tags: { type: String },
     createdAt: { type: String },
     updatedAt: { type: String },
