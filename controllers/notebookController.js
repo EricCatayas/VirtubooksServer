@@ -2,15 +2,21 @@ const Notebook = require("../models/notebook");
 const Page = require("../models/page");
 const authService = require("../services/authService.js");
 const { arrayToIdMap } = require("../utils/converters");
-const { generateUID } = require("../utils/generators");
+const { generateUID, generateSlug } = require("../utils/generators");
 
 class NotebookController {
   // Get a specific notebook by ID and user ID
   async getNotebook(req, res, next) {
     try {
       const userId = req.user?.id;
+      const notebookId = req.params.id;
+
+      if (!notebookId) {
+        return res.status(400).json({ message: "Notebook ID is required" });
+      }
+
       const notebook = await Notebook.findOne({
-        id: req.params.id,
+        id: notebookId,
       }).populate("pages");
 
       if (!notebook) {
@@ -36,6 +42,43 @@ class NotebookController {
       next(error);
     }
   }
+
+  async getNotebookBySlug(req, res, next) {
+    try {
+      const userId = req.user?.id;
+      const slug = req.params.slug;
+
+      if (!slug) {
+        return res.status(400).json({ message: "Notebook slug is required" });
+      }
+      const notebook = await Notebook.findOne({ slug })
+        .sort({ createdAt: 1 })
+        .populate("pages");
+
+      if (!notebook) {
+        return res.status(404).json({ message: "Notebook not found" });
+      }
+
+      if (
+        notebook.visibility === "private" &&
+        String(notebook.userId) !== String(userId)
+      ) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      if (req.user && String(notebook.userId) === String(req.user.id)) {
+        notebook.author = req.user.username;
+      } else {
+        const author = await authService.getUserById(notebook.userId);
+        notebook.author = author.username;
+      }
+
+      res.status(200).json(notebook);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // Get all notebooks for a user
   async getNotebooksFromUser(req, res, next) {
     try {
@@ -124,7 +167,6 @@ class NotebookController {
         ...(s_createdAt ? { createdAt: s_createdAt === "asc" ? 1 : -1 } : {}),
       };
 
-      console.log("Filter:", filter);
       const result = await Notebook.find(filter)
         .sort(sort)
         .limit(Number(limit))
@@ -174,6 +216,12 @@ class NotebookController {
         coverImageURL,
       } = req.body;
 
+      if (!title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+
+      const slug = generateSlug(title);
+
       const newNotebook = new Notebook({
         id: generateUID(),
         userId: req.user.id,
@@ -181,6 +229,7 @@ class NotebookController {
         description,
         visibility,
         aspectRatio,
+        slug,
         tags,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -239,6 +288,13 @@ class NotebookController {
     try {
       const { title, description, visibility, aspectRatio, tags, styles } =
         req.body;
+
+      if (!title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+
+      const slug = generateSlug(title);
+
       const updatedNotebook = await Notebook.findOneAndUpdate(
         { id: req.params.id, userId: req.user.id },
         {
@@ -246,6 +302,7 @@ class NotebookController {
           description,
           visibility,
           aspectRatio,
+          slug,
           tags,
           styles,
           updatedAt: new Date().toISOString(),

@@ -18,6 +18,11 @@ router.get(
   parseUserFromToken,
   NotebookController.getFilteredNotebooks
 );
+router.get(
+  "/slug/:slug",
+  parseUserFromToken,
+  NotebookController.getNotebookBySlug
+);
 router.post("/", authMiddleware, NotebookController.createNotebook);
 router.get("/:id", parseUserFromToken, NotebookController.getNotebook);
 router.put("/:id", authMiddleware, NotebookController.updateNotebook);
