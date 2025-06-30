@@ -30,12 +30,12 @@ class NotebookController {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      if (req.user && String(notebook.userId) === String(req.user.id)) {
-        notebook.author = req.user.username;
-      } else {
-        const author = await authService.getUserById(notebook.userId);
-        notebook.author = author.username;
-      }
+      const author = await authService.getUserById(notebook.userId);
+      notebook.author = author.display_name ?? author.username;
+
+      // if (req.user && String(notebook.userId) === String(req.user.id)) {
+      //   notebook.author = req.user.username;
+      // }
 
       res.status(200).json(notebook);
     } catch (error) {
@@ -70,7 +70,7 @@ class NotebookController {
         notebook.author = req.user.username;
       } else {
         const author = await authService.getUserById(notebook.userId);
-        notebook.author = author.username;
+        notebook.author = author.display_name ?? author.username;
       }
 
       res.status(200).json(notebook);
@@ -103,7 +103,8 @@ class NotebookController {
             }).populate("pages");
 
       notebooks.forEach((notebook) => {
-        notebook.author = author.username || "Unknown Author";
+        notebook.author =
+          author.display_name || author.username || "Unknown Author";
       });
 
       res.status(200).json(notebooks);
@@ -176,7 +177,9 @@ class NotebookController {
       const mappedUsers = arrayToIdMap(users);
       result.forEach((notebook) => {
         notebook.author =
-          mappedUsers[notebook.userId]?.username || "Unknown Author";
+          mappedUsers[notebook.userId]?.display_name ||
+          mappedUsers[notebook.userId]?.username ||
+          "Unknown Author";
       });
 
       res.status(200).json(result);
@@ -195,7 +198,9 @@ class NotebookController {
       const mappedUsers = arrayToIdMap(users);
       notebooks.forEach((notebook) => {
         notebook.author =
-          mappedUsers[notebook.userId]?.username || "Unknown Author";
+          mappedUsers[notebook.userId]?.display_name ||
+          mappedUsers[notebook.userId]?.username ||
+          "Unknown Author";
       });
       res.status(200).json(notebooks);
     } catch (error) {
