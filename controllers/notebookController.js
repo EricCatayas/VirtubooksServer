@@ -191,9 +191,9 @@ class NotebookController {
   // Get all public notebooks
   async getPublicNotebooks(req, res, next) {
     try {
-      const notebooks = await Notebook.find({ visibility: "public" }).populate(
-        "pages"
-      );
+      const notebooks = await Notebook.find({ visibility: "public" })
+        .sort({ createdAt: -1 })
+        .populate("pages");
       const users = await authService.getUsers();
       const mappedUsers = arrayToIdMap(users);
       notebooks.forEach((notebook) => {
