@@ -29,7 +29,9 @@ async function main() {
 app.use(express.json());
 app.use(cors({ origin: process.env.CLIENT_URL }));
 
-// Move error handling middleware to the end
+app.get("/", (req, res) => {
+  res.send("API is running");
+});
 app.use("/api", apiRoute);
 
 // Error handling middleware should be last
