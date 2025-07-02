@@ -28,7 +28,12 @@ async function main() {
 
 app.use(express.json());
 
-const allowedOrigins = [process.env.CLIENT_URL, "https://virtubooks.online"];
+// Configure CORS with multiple allowed origins
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:10004",
+  "https://virtubooks.online",
+].filter(Boolean); // Remove any undefined values
 
 app.use(
   cors({
@@ -43,6 +48,8 @@ app.use(
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
