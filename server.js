@@ -29,11 +29,10 @@ async function main() {
 
 app.use(express.json());
 
-// Configure CORS with multiple allowed origins
 const allowedOrigins = [
   process.env.CLIENT_URL,
-  "http://localhost:10004",
   "https://virtubooks.online",
+  "https://www.virtubooks.online",
 ].filter(Boolean);
 
 app.use(
