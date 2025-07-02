@@ -16,14 +16,15 @@ main().catch((err) => {
 });
 
 async function main() {
-  await mongoose
-    .connect(DB_URL, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => {
-      console.log("Db Connection established");
-    })
-    .catch((err) => {
-      console.log(err);
+  try {
+    await mongoose.connect(DB_URL, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
+    console.log("Db Connection established");
+  } catch (err) {
+    console.error("Database connection failed:", err);
+  }
 }
 
 app.use(express.json());
@@ -33,7 +34,7 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
   "http://localhost:10004",
   "https://virtubooks.online",
-].filter(Boolean); // Remove any undefined values
+].filter(Boolean);
 
 app.use(
   cors({
